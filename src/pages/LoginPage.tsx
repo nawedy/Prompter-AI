@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
-import { userRepository } from '../db/repositories';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -18,14 +17,21 @@ export function LoginPage() {
     setError('');
 
     try {
-      const user = await userRepository.getByEmail(formData.email);
-      if (!user) {
-        setError('Invalid email or password');
-        return;
-      }
-
-      // In a real app, verify password hash here
-      login(user);
+      // TODO: Replace with API call
+      const mockUser = {
+        id: '1',
+        email: formData.email,
+        name: 'Test User',
+        avatarUrl: '',
+        apiKeys: {},
+        settings: {
+          theme: 'light',
+          language: 'en',
+          defaultMode: 'guide'
+        }
+      };
+      
+      login(mockUser);
       navigate('/dashboard');
     } catch (err) {
       setError('Failed to sign in. Please try again.');

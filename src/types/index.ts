@@ -76,6 +76,7 @@ export interface Template {
   category: string;
   project_type: string;
   tags?: string[];
+  usageCount: number;
   createdAt: Date;
   updatedAt: Date;
 }

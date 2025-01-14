@@ -1,32 +1,41 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { templateRepository } from '../../../db/repositories';
-import { LoadingSpinner } from '../../LoadingSpinner';
+import { useState, useEffect } from 'react';
+import { Card } from '../../ui/Card';
+import type { Template } from '../../../types';
 
 export function TemplateUsage() {
-  const { data, isLoading } = useQuery('templateUsage', async () => {
-    const templates = await templateRepository.getAll();
-    return templates.map(template => ({
-      name: template.name,
-      uses: template.useCount || 0,
-      category: template.category
-    }));
-  });
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (isLoading) return <LoadingSpinner />;
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        // TODO: Replace with API call
+        const mockTemplates: Template[] = [];
+        setTemplates(mockTemplates);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTemplates();
+  }, []);
+
+  if (loading) return <div>Loading templates...</div>;
 
   return (
-    <div className="h-full min-h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="uses" fill="#8884d8" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <Card>
+      <h2 className="text-xl font-semibold mb-4">Template Usage</h2>
+      {templates.length === 0 ? (
+        <p>No templates yet</p>
+      ) : (
+        <ul className="space-y-4">
+          {templates.map((template) => (
+            <li key={template.id} className="flex justify-between items-center">
+              <span>{template.name}</span>
+              <span className="text-gray-500">{template.usageCount || 0} uses</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }

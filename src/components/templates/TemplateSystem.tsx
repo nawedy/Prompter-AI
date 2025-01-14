@@ -1,6 +1,4 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { templateRepository } from '../../db/repositories';
+import React, { useState, useEffect } from 'react';
 import { TemplateEditor } from './TemplateEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { TemplateList } from './TemplateList';
@@ -8,11 +6,28 @@ import { LoadingSpinner } from '../LoadingSpinner';
 import type { Template } from '../../types';
 
 export function TemplateSystem() {
-  const { data: templates, isLoading, error } = useQuery('templates', templateRepository.getAll);
-  const [selectedTemplate, setSelectedTemplate] = React.useState<Template | null>(null);
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  if (isLoading) return <LoadingSpinner />;
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        // TODO: Replace with API call
+        const mockTemplates: Template[] = [];
+        setTemplates(mockTemplates);
+      } catch (err) {
+        setError('Failed to load templates');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTemplates();
+  }, []);
+
+  if (loading) return <LoadingSpinner />;
   if (error) return <div>Error loading templates</div>;
 
   return (

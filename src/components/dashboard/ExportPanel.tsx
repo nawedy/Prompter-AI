@@ -1,105 +1,46 @@
 import React, { useState } from 'react';
-import { Download, Calendar, Share2 } from 'lucide-react';
-import { saveAs } from 'file-saver';
-import { promptRepository } from '../../db/repositories';
-
-interface ExportOptions {
-  format: 'pdf' | 'csv' | 'excel';
-  dateRange: 'day' | 'week' | 'month' | 'custom';
-  widgets: string[];
-}
+import { Card } from '../ui/Card';
+import type { Prompt } from '../../types';
 
 export function ExportPanel() {
-  const [options, setOptions] = useState<ExportOptions>({
-    format: 'pdf',
-    dateRange: 'week',
-    widgets: []
-  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleExport = async () => {
-    const data = await promptRepository.getExportData(options);
-    const blob = new Blob([data], { type: 'application/octet-stream' });
-    saveAs(blob, `dashboard-export-${new Date().toISOString()}.${options.format}`);
+    setLoading(true);
+    try {
+      // TODO: Replace with API call
+      const mockPrompts: Prompt[] = [];
+      const jsonData = JSON.stringify(mockPrompts, null, 2);
+      
+      // Create and download file
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prompts-${new Date().toISOString()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      setError('Failed to export data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg border border-gray-200">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Export Dashboard</h3>
-        <button
-          onClick={handleExport}
-          className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Format</label>
-          <select
-            value={options.format}
-            onChange={(e) => setOptions({ ...options, format: e.target.value as any })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          >
-            <option value="pdf">PDF</option>
-            <option value="csv">CSV</option>
-            <option value="excel">Excel</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Date Range</label>
-          <div className="mt-1 flex items-center space-x-2">
-            <button
-              onClick={() => setOptions({ ...options, dateRange: 'day' })}
-              className={`px-3 py-2 rounded-md text-sm ${
-                options.dateRange === 'day'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              Today
-            </button>
-            <button
-              onClick={() => setOptions({ ...options, dateRange: 'week' })}
-              className={`px-3 py-2 rounded-md text-sm ${
-                options.dateRange === 'week'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              This Week
-            </button>
-            <button
-              onClick={() => setOptions({ ...options, dateRange: 'month' })}
-              className={`px-3 py-2 rounded-md text-sm ${
-                options.dateRange === 'month'
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              This Month
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <button
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Schedule Export
-          </button>
-          <button
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share Dashboard
-          </button>
-        </div>
-      </div>
-    </div>
+    <Card>
+      <h2 className="text-xl font-semibold mb-4">Export Data</h2>
+      <button
+        onClick={handleExport}
+        disabled={loading}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+      >
+        {loading ? 'Exporting...' : 'Export Prompts'}
+      </button>
+      {error && <p className="mt-2 text-red-500">{error}</p>}
+    </Card>
   );
 }
