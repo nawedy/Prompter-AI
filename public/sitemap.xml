@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://prompter.ai/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://prompter.ai/dashboard</loc>
+    <changefreq>daily</priority>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://prompter.ai/templates</loc>
+    <changefreq>weekly</priority>
+    <priority>0.7</priority>
+  </url>
+</urlset>

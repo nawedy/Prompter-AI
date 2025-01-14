@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AIToolType {
+  TEXT_TO_IMAGE
+  IMAGE_ENHANCEMENT
+  TEXT_TO_VIDEO
+  IMAGE_TO_VIDEO
+  VIDEO_TO_VIDEO
+  TEXT_COMPLETION
+  CODE_GENERATION
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  avatarUrl String?
+  apiKeys   Json?      @default("{}")
+  settings  Json?      @default("{}")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  feedback  Feedback[]
+  prompts   Prompt[]
+
+  @@map("users")
+}
+
+model Prompt {
+  id        String     @id @default(uuid())
+  title     String
+  content   String
+  category  String
+  toolType  AIToolType
+  tags      String[]
+  folderId  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+
+  @@map("prompts")
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  content     String
+  category    String
+  projectType String   @map("project_type")
+  tags        String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("templates")
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("feedback")
+}
