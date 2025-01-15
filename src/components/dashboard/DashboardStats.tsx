@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '../ui/Card';
-import type { Prompt } from '../../types';
 
 export function DashboardStats() {
   const [stats, setStats] = useState({
