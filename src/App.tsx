@@ -4,6 +4,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { DevTools } from './components/dev/DevTools';
 
 // Lazy load route components
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -58,6 +59,7 @@ function App() {
               />
             </Routes>
           </Suspense>
+          <DevTools />
         </div>
       </BrowserRouter>
     </ErrorBoundary>
