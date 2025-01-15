@@ -6,30 +6,111 @@ interface PerformanceMetric {
   value: number;
   startTime?: number;
   duration?: number;
+  category: 'timing' | 'memory' | 'bundle' | 'network';
+  unit: 'ms' | 'MB' | 'KB' | 'count';
 }
 
 class PerformanceMonitor {
   private metrics: Map<string, PerformanceMetric> = new Map();
   private isEnabled: boolean;
+  private memoryInterval: number | null = null;
 
   constructor() {
     this.isEnabled = env.VITE_ENABLE_PERFORMANCE_MONITORING === 'true';
+    if (this.isEnabled && import.meta.env.DEV) {
+      this.startMemoryMonitoring();
+      this.trackBundleSizes();
+      this.trackNetworkRequests();
+    }
+  }
+
+  private startMemoryMonitoring() {
+    if ('memory' in performance) {
+      this.memoryInterval = window.setInterval(() => {
+        const memory = (performance as any).memory;
+        this.metrics.set('memory.heapSize', {
+          name: 'memory.heapSize',
+          value: Math.round(memory.usedJSHeapSize / (1024 * 1024)),
+          category: 'memory',
+          unit: 'MB'
+        });
+        this.metrics.set('memory.heapLimit', {
+          name: 'memory.heapLimit',
+          value: Math.round(memory.jsHeapSizeLimit / (1024 * 1024)),
+          category: 'memory',
+          unit: 'MB'
+        });
+      }, 1000);
+    }
+  }
+
+  private async trackBundleSizes() {
+    const manifest = await fetch('/manifest.json').catch(() => null);
+    if (manifest) {
+      const data = await manifest.json();
+      Object.entries(data).forEach(([key, value]: [string, any]) => {
+        if (value.file) {
+          this.metrics.set(`bundle.${key}`, {
+            name: `bundle.${key}`,
+            value: Math.round(value.size / 1024),
+            category: 'bundle',
+            unit: 'KB'
+          });
+        }
+      });
+    }
+  }
+
+  private trackNetworkRequests() {
+    const originalFetch = window.fetch;
+    let activeRequests = 0;
+
+    window.fetch = async (...args) => {
+      const start = performance.now();
+      activeRequests++;
+      
+      this.metrics.set('network.activeRequests', {
+        name: 'network.activeRequests',
+        value: activeRequests,
+        category: 'network',
+        unit: 'count'
+      });
+
+      try {
+        const response = await originalFetch(...args);
+        const duration = performance.now() - start;
+        
+        this.metrics.set(`network.request.${args[0]}`, {
+          name: `network.request.${args[0]}`,
+          value: duration,
+          category: 'network',
+          unit: 'ms'
+        });
+        
+        return response;
+      } finally {
+        activeRequests--;
+        this.metrics.set('network.activeRequests', {
+          name: 'network.activeRequests',
+          value: activeRequests,
+          category: 'network',
+          unit: 'count'
+        });
+      }
+    };
   }
 
   startMeasure(name: string) {
     if (!this.isEnabled) return;
 
     const startTime = performance.now();
-    this.metrics.set(name, { name, value: 0, startTime });
-    
-    // Report to Web Vitals
-    if ('reportWebVitals' in window) {
-      (window as any).reportWebVitals({
-        name,
-        value: 0,
-        startTime,
-      });
-    }
+    this.metrics.set(name, {
+      name,
+      value: 0,
+      startTime,
+      category: 'timing',
+      unit: 'ms'
+    });
   }
 
   endMeasure(name: string) {
@@ -47,30 +128,46 @@ class PerformanceMonitor {
       duration,
     });
 
-    // Log to console in development
     if (import.meta.env.DEV) {
       console.log(`Performance: ${name} took ${duration.toFixed(2)}ms`);
     }
-
-    // Report to Web Vitals
-    if ('reportWebVitals' in window) {
-      (window as any).reportWebVitals({
-        name,
-        value: duration,
-        startTime: metric.startTime,
-        duration,
-      });
-    }
   }
 
-  // Get all metrics
   getMetrics(): PerformanceMetric[] {
     return Array.from(this.metrics.values());
   }
 
-  // Clear all metrics
   clearMetrics() {
     this.metrics.clear();
+  }
+
+  exportMetrics() {
+    const metrics = this.getMetrics();
+    const timestamp = new Date().toISOString();
+    const data = {
+      timestamp,
+      metrics: metrics.map(m => ({
+        ...m,
+        timestamp
+      }))
+    };
+
+    // Download as JSON
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `performance-metrics-${timestamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  dispose() {
+    if (this.memoryInterval) {
+      clearInterval(this.memoryInterval);
+    }
   }
 }
 
