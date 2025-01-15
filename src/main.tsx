@@ -6,6 +6,21 @@ import { Toaster } from 'react-hot-toast';
 import App from './App';
 import './i18n';
 import './index.css';
+import { env } from './utils/env';
+
+// Validate environment variables
+try {
+  console.log('API URL:', env.VITE_API_URL);
+} catch (error) {
+  console.error('Environment validation failed:', error);
+  document.body.innerHTML = `
+    <div style="color: red; padding: 20px;">
+      <h1>Configuration Error</h1>
+      <p>${error instanceof Error ? error.message : 'Unknown error'}</p>
+    </div>
+  `;
+  throw error;
+}
 
 // Create a client
 const queryClient = new QueryClient({
