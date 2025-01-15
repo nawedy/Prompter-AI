@@ -11,11 +11,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['recharts']
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['@headlessui/react', '@heroicons/react', 'tailwindcss'],
+          'vendor-charts': ['recharts'],
+          'vendor-utils': ['@tanstack/react-query', 'axios', 'date-fns'],
         }
       }
     },
+    chunkSizeWarningLimit: 1000,
     target: 'esnext', // Enable top-level await support
   },
   optimizeDeps: {

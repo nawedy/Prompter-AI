@@ -1,7 +1,20 @@
+import { Suspense } from 'react';
 import { DashboardStats } from '../components/dashboard/DashboardStats';
-import { RecentPrompts } from '../components/dashboard/RecentPrompts';
-import { DashboardGrid } from '../components/dashboard/DashboardGrid';
+import { ModelUsage, TemplateUsage, RecentPrompts } from '../components/dashboard/LazyWidgets';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useUserStore } from '../store/userStore';
+
+const WidgetWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Suspense
+    fallback={
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner />
+      </div>
+    }
+  >
+    {children}
+  </Suspense>
+);
 
 export function Dashboard() {
   const { user } = useUserStore();
@@ -21,11 +34,21 @@ export function Dashboard() {
         <DashboardStats />
 
         {/* Grid Layout */}
-        <DashboardGrid />
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <WidgetWrapper>
+            <ModelUsage />
+          </WidgetWrapper>
+          
+          <WidgetWrapper>
+            <TemplateUsage />
+          </WidgetWrapper>
+        </div>
+        
         {/* Recent Prompts */}
         <div className="mt-8">
-          <RecentPrompts />
+          <WidgetWrapper>
+            <RecentPrompts />
+          </WidgetWrapper>
         </div>
       </div>
     </div>

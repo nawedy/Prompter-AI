@@ -1,0 +1,12 @@
+{
+  "name": "netlify-local-plugins",
+  "description": "This directory contains Build plugins that have been automatically installed by Netlify.",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Netlify",
+  "license": "MIT",
+  "dependencies": {
+    "bluesky-custom-domain-buildhooks": "https://7500eee8-cb29-4c99-8f3e-eff2e23e8d44.netlify.app/packages/buildhooks.tgz",
+    "fireproof-buildhooks": "https://1c1df094-75d2-4ed1-b918-1926a3953680.netlify.app/packages/buildhooks.tgz"
+  }
+}
