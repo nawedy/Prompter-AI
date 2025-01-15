@@ -1,5 +1,6 @@
 import { performanceMonitor } from './monitoring/performance';
 import { env } from './env';
+import { performanceBudgetMonitor } from './performanceBudgets';
 
 interface PerformanceMetric {
   name: string;
@@ -28,12 +29,17 @@ class PerformanceMonitor {
     if ('memory' in performance) {
       this.memoryInterval = window.setInterval(() => {
         const memory = (performance as any).memory;
+        const heapSize = Math.round(memory.usedJSHeapSize / (1024 * 1024));
+        
         this.metrics.set('memory.heapSize', {
           name: 'memory.heapSize',
-          value: Math.round(memory.usedJSHeapSize / (1024 * 1024)),
+          value: heapSize,
           category: 'memory',
           unit: 'MB'
         });
+
+        performanceBudgetMonitor.checkBudget('memory.heapSize', heapSize);
+
         this.metrics.set('memory.heapLimit', {
           name: 'memory.heapLimit',
           value: Math.round(memory.jsHeapSizeLimit / (1024 * 1024)),
@@ -50,12 +56,15 @@ class PerformanceMonitor {
       const data = await manifest.json();
       Object.entries(data).forEach(([key, value]: [string, any]) => {
         if (value.file) {
+          const size = Math.round(value.size / 1024);
           this.metrics.set(`bundle.${key}`, {
             name: `bundle.${key}`,
-            value: Math.round(value.size / 1024),
+            value: size,
             category: 'bundle',
             unit: 'KB'
           });
+
+          performanceBudgetMonitor.checkBudget(`bundle.${key}`, size);
         }
       });
     }
@@ -80,12 +89,15 @@ class PerformanceMonitor {
         const response = await originalFetch(...args);
         const duration = performance.now() - start;
         
-        this.metrics.set(`network.request.${args[0]}`, {
-          name: `network.request.${args[0]}`,
+        const metricName = `network.request.${args[0]}`;
+        this.metrics.set(metricName, {
+          name: metricName,
           value: duration,
           category: 'network',
           unit: 'ms'
         });
+
+        performanceBudgetMonitor.checkBudget('network.request', duration);
         
         return response;
       } finally {
@@ -127,6 +139,8 @@ class PerformanceMonitor {
       value: duration,
       duration,
     });
+
+    performanceBudgetMonitor.checkBudget(name, duration);
 
     if (import.meta.env.DEV) {
       console.log(`Performance: ${name} took ${duration.toFixed(2)}ms`);
