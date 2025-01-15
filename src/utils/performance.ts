@@ -1,4 +1,80 @@
 import { performanceMonitor } from './monitoring/performance';
+import { env } from './env';
+
+interface PerformanceMetric {
+  name: string;
+  value: number;
+  startTime?: number;
+  duration?: number;
+}
+
+class PerformanceMonitor {
+  private metrics: Map<string, PerformanceMetric> = new Map();
+  private isEnabled: boolean;
+
+  constructor() {
+    this.isEnabled = env.VITE_ENABLE_PERFORMANCE_MONITORING === 'true';
+  }
+
+  startMeasure(name: string) {
+    if (!this.isEnabled) return;
+
+    const startTime = performance.now();
+    this.metrics.set(name, { name, value: 0, startTime });
+    
+    // Report to Web Vitals
+    if ('reportWebVitals' in window) {
+      (window as any).reportWebVitals({
+        name,
+        value: 0,
+        startTime,
+      });
+    }
+  }
+
+  endMeasure(name: string) {
+    if (!this.isEnabled) return;
+
+    const metric = this.metrics.get(name);
+    if (!metric || !metric.startTime) return;
+
+    const endTime = performance.now();
+    const duration = endTime - metric.startTime;
+
+    this.metrics.set(name, {
+      ...metric,
+      value: duration,
+      duration,
+    });
+
+    // Log to console in development
+    if (import.meta.env.DEV) {
+      console.log(`Performance: ${name} took ${duration.toFixed(2)}ms`);
+    }
+
+    // Report to Web Vitals
+    if ('reportWebVitals' in window) {
+      (window as any).reportWebVitals({
+        name,
+        value: duration,
+        startTime: metric.startTime,
+        duration,
+      });
+    }
+  }
+
+  // Get all metrics
+  getMetrics(): PerformanceMetric[] {
+    return Array.from(this.metrics.values());
+  }
+
+  // Clear all metrics
+  clearMetrics() {
+    this.metrics.clear();
+  }
+}
+
+export const performanceMonitor = new PerformanceMonitor();
 
 export const performance = {
   measureInteraction: (name: string) => {
@@ -6,7 +82,7 @@ export const performance = {
     return {
       end: () => {
         const duration = performance.now() - start;
-        performanceMonitor.recordMetric(`interaction.${name}`, duration);
+        performanceMonitor.endMeasure(`interaction.${name}`);
       }
     };
   },
@@ -17,6 +93,7 @@ export const performance = {
       end: (measureName: string) => {
         performance.mark(`${markName}_end`);
         performance.measure(measureName, markName, `${markName}_end`);
+        performanceMonitor.endMeasure(measureName);
       }
     };
   }

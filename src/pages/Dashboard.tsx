@@ -2,19 +2,27 @@ import { Suspense } from 'react';
 import { DashboardStats } from '../components/dashboard/DashboardStats';
 import { ModelUsage, TemplateUsage, RecentPrompts } from '../components/dashboard/LazyWidgets';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { LazyErrorBoundary } from '../components/LazyErrorBoundary';
+import { performanceMonitor } from '../utils/performance';
 import { useUserStore } from '../store/userStore';
 
-const WidgetWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Suspense
-    fallback={
-      <div className="flex justify-center items-center h-64">
-        <LoadingSpinner />
-      </div>
-    }
-  >
-    {children}
-  </Suspense>
-);
+const WidgetWrapper = ({ children, name }: { children: React.ReactNode; name: string }) => {
+  performanceMonitor.startMeasure(`render.${name}`);
+  
+  return (
+    <LazyErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="flex justify-center items-center h-64">
+            <LoadingSpinner />
+          </div>
+        }
+      >
+        {children}
+      </Suspense>
+    </LazyErrorBoundary>
+  );
+};
 
 export function Dashboard() {
   const { user } = useUserStore();
@@ -35,18 +43,18 @@ export function Dashboard() {
 
         {/* Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          <WidgetWrapper>
+          <WidgetWrapper name="ModelUsage">
             <ModelUsage />
           </WidgetWrapper>
           
-          <WidgetWrapper>
+          <WidgetWrapper name="TemplateUsage">
             <TemplateUsage />
           </WidgetWrapper>
         </div>
         
         {/* Recent Prompts */}
         <div className="mt-8">
-          <WidgetWrapper>
+          <WidgetWrapper name="RecentPrompts">
             <RecentPrompts />
           </WidgetWrapper>
         </div>

@@ -1,5 +1,36 @@
 import { lazy } from 'react';
+import { performanceMonitor } from '../../utils/performance';
 
-export const ModelUsage = lazy(() => import('./widgets/ModelUsage'));
-export const TemplateUsage = lazy(() => import('./widgets/TemplateUsage'));
-export const RecentPrompts = lazy(() => import('./RecentPrompts'));
+const withPerformanceTracking = (
+  importFn: () => Promise<any>,
+  componentName: string
+) => {
+  return () => {
+    performanceMonitor.startMeasure(`load.${componentName}`);
+    return importFn().then((module) => {
+      performanceMonitor.endMeasure(`load.${componentName}`);
+      return module;
+    });
+  };
+};
+
+export const ModelUsage = lazy(
+  withPerformanceTracking(
+    () => import('./widgets/ModelUsage'),
+    'ModelUsage'
+  )
+);
+
+export const TemplateUsage = lazy(
+  withPerformanceTracking(
+    () => import('./widgets/TemplateUsage'),
+    'TemplateUsage'
+  )
+);
+
+export const RecentPrompts = lazy(
+  withPerformanceTracking(
+    () => import('./RecentPrompts'),
+    'RecentPrompts'
+  )
+);
