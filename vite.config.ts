@@ -3,6 +3,24 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: './',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          charts: ['recharts']
+        }
+      }
+    },
+    target: 'esnext', // Enable top-level await support
+  },
+  optimizeDeps: {
+    exclude: ['lucide-react'],
+  },
   plugins: [
     react(),
     VitePWA({
@@ -35,10 +53,4 @@ export default defineConfig({
       }
     })
   ],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
-  build: {
-    target: 'esnext', // Enable top-level await support
-  },
 });
